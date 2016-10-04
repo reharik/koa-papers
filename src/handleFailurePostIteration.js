@@ -14,14 +14,13 @@ module.exports = (failures, res, papers) => {
 
   res.status = failures.map(f => f.statusCode)
     .reduce((prev, curr) => prev < curr ? curr : prev, 401);
-
   if (papers.functions.customHandler) {
     return {
       type: 'customHandler',
       result: 'fail',
       value: {
         type: 'fail',
-        details: {errorMessage: errorMessages[0], statusCode: http.STATUS_CODES[res.statusCode]}
+        details: {errorMessage: errorMessages[0], statusCode: http.STATUS_CODES[res.status]}
       }
     };
   }

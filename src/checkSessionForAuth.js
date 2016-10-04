@@ -1,17 +1,18 @@
 
-module.exports = (papers, req) => {
+module.exports = (papers, ctx) => {
     /********* check session for auth *************/
+ 
     if (papers.options.useSession
-        && req.session[papers.options.key]
-        && req.session[papers.options.key].user) {
-        return papers.functions.deserializeUser(req.session[papers.options.key].user, papers)
+        && ctx.session[papers.options.key]
+        && ctx.session[papers.options.key].user) {
+        return papers.functions.deserializeUser(ctx.session[papers.options.key].user, papers)
             .then(result => {
                 const user = result;
                 if (!user) {
-                    delete req.session[papers.options.key].user;
+                  delete ctx.session[papers.options.key].user;
                   return Promise.resolve({isLoggedIn: false});
                 }
-                req[papers.options.userProperty] = user;
+                ctx.request[papers.options.userProperty] = user;
               return Promise.resolve({isLoggedIn: true});
             }).catch(ex => {
             throw new Error("Error thrown during deserialization of user.");

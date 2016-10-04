@@ -5,6 +5,7 @@ var strategy = require('./helpers/testStrategy');
 var chai = require('chai');
 var expect = chai.expect;
 chai.should();
+var co = require('co');
 
 describe.only('AUTHENTICATION', () => {
   describe('when_calling_middleware', () => {
@@ -12,8 +13,7 @@ describe.only('AUTHENTICATION', () => {
     let req;
     let res;
     let next;
-    beforeEach(() => {
-      req = request();
+    beforeEach( (done) => {req = request();
       res = response();
       var myStrategy = strategy({type:'pass'});
       var config = {
@@ -21,13 +21,18 @@ describe.only('AUTHENTICATION', () => {
         serializers:[()=>{}],
         deserializers:[()=>{}]
       };
-      SUT = papers().registerMiddleware(config);
 
-      SUT(next);
+      SUT = papers().registerMiddleware(config);
+      co(function *(){
+        var ctx = {request:req, response: res};
+        yield SUT.call(ctx, [next]);
+        done()
+      })
+
     });
 
     it('should_put_methods_on_req', () => {
-      SUT.req.logOut.should.be.function;
+      req.logOut.should.be.function;
       req.isAuthenticated .should.be.function;
     })
   });
@@ -36,8 +41,9 @@ describe.only('AUTHENTICATION', () => {
     let SUT = undefined;
     let req;
     let res;
-    beforeEach(() => {
-      req = request({});
+    let next;
+    beforeEach((done) => {
+      req = request();
       res = response();
       var myStrategy = strategy({type:'pass'});
       var config = {
@@ -48,7 +54,11 @@ describe.only('AUTHENTICATION', () => {
       };
       SUT = papers().registerMiddleware(config);
 
-      SUT(req, res);
+      co(function *(){
+        var ctx = {request:req, response: res, session: {}};
+        yield SUT.call(ctx, [next]);
+        done()
+      })
     });
 
     it('should_not_put_user_on_res', () => {
@@ -61,9 +71,10 @@ describe.only('AUTHENTICATION', () => {
     let req;
     let res;
     let user;
+    let next = ()=>{}
     beforeEach((done) => {
       user = { name: 'bubba' };
-      req = request({'papers':{user}});
+      req = request();
       res = response();
       var myStrategy = strategy({type:'pass'});
       var config = {
@@ -74,8 +85,11 @@ describe.only('AUTHENTICATION', () => {
       };
       SUT = papers().registerMiddleware(config);
 
-      SUT(req, res, ()=>{});
-      setTimeout(done,10);
+      co(function *(){
+        var ctx = {request:req, response: res, session: {'papers':{user}}};
+        yield SUT.call(ctx, [next]);
+        done()
+      })
     });
 
     it('should_put_user_on_res', () => {
@@ -88,6 +102,8 @@ describe.only('AUTHENTICATION', () => {
     let req;
     let res;
     let user;
+    let next = ()=>{};
+    var ctx;
     beforeEach((done) => {
       user = { name: 'bubba' };
       req = request({'papers':{user}});
@@ -101,12 +117,15 @@ describe.only('AUTHENTICATION', () => {
       };
       SUT = papers().registerMiddleware(config);
 
-      SUT(req, res, ()=>{});
-      setTimeout(done,10);
+      co(function *(){
+        ctx = {request:req, response: res, session: {'papers':{user}}};
+        yield SUT.call(ctx, [next]);
+        done()
+      })
     });
 
     it('should_remove_user_from_session', () => {
-      expect(req.session.papers.user).to.be.undefined;
+      expect(ctx.session.papers.user).to.be.undefined;
     })
   });
 
@@ -115,6 +134,8 @@ describe.only('AUTHENTICATION', () => {
     let req;
     let res;
     let user;
+    let next = ()=>{};
+    var ctx;
     beforeEach((done) => {
       user = { name: 'bubba' };
       req = request({'papers':{user}});
@@ -127,8 +148,12 @@ describe.only('AUTHENTICATION', () => {
         useSession: true
       };
       SUT = papers().registerMiddleware(config);
-      result = SUT(req, res, ()=>{});
-      setTimeout(done,10);
+
+      co(function *(){
+        ctx = {request:req, response: res, session: {'papers':{user}}};
+        yield SUT.call(ctx, [next]);
+        done()
+      })
     });
 
     it('should_return_500_with_the_error', () => {

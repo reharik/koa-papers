@@ -2,15 +2,18 @@ var papers = require('./../src/papers');
 var request = require('./helpers/request');
 var response = require('./helpers/response');
 var strategy = require('./helpers/testStrategy');
+var co = require('co');
+
 var chai = require('chai');
 var expect = chai.expect;
 chai.should();
 
-describe('FAIL_RESPONSE', () => {
+describe.only('FAIL_RESPONSE', () => {
   describe('when_fail_is_called_by_strategy', () => {
     let SUT = undefined;
     let req;
     let res;
+    let next = (arg)=> {nextArg=arg};
     beforeEach((done) => {
       req = request();
       res = response();
@@ -19,20 +22,19 @@ describe('FAIL_RESPONSE', () => {
         strategies: [myStrategy]
       };
       SUT = papers().registerMiddleware(config);
-      SUT(req, res);
-      setTimeout(done,10);
+      co(function *(){
+        ctx = {request:req, response: res, throw: (type, msg, status)=>{res.statusCode = status; res.body = msg} };
+        yield SUT.call(ctx, [next]);
+        done()
+      });
     });
 
     it('should_set_res_status_to_401', () => {
-      res.statusCode.should.equal(401);
+      res.status.should.equal(401);
     });
 
     it('should_set_res_header_WWWW-Authenticate_to_error_message', () => {
       res.getHeader('WWW-Authenticate')[0].should.equal('auth failed');
-    });
-
-    it('should_call_res.end', () => {
-      res.endWasCalled.should.be.true
     });
 
   });
@@ -42,6 +44,7 @@ describe('FAIL_RESPONSE', () => {
     let req;
     let res;
     let nextArg;
+    let next = (arg)=> {nextArg=arg};
     beforeEach((done) => {
       req = request();
       res = response();
@@ -50,16 +53,17 @@ describe('FAIL_RESPONSE', () => {
         strategies: [myStrategy],
         failWithError: true
       };
-      var next = (arg) => {
-        nextArg = arg;
-      };
+
       SUT = papers().registerMiddleware(config);
-      SUT(req, res, next);
-      setTimeout(done,10);
+      co(function *(){
+        ctx = {request:req, response: res, throw: (type, msg, status)=>{res.statusCode = status; res.body = msg} };
+        yield SUT.call(ctx, [next]);
+        done()
+      });
     });
 
     it('should_call_next_poper_error_message', () => {
-      nextArg.should.eql(new Error('Unauthorized'));
+      res.body.should.eql(new Error('Unauthorized'));
     });
 
     it('should_set_res_header_WWWW-Authenticate_to_error_message', () => {
@@ -71,6 +75,7 @@ describe('FAIL_RESPONSE', () => {
     let SUT = undefined;
     let req;
     let res;
+    let next = (arg)=> {nextArg=arg};
     beforeEach((done) => {
       req = request();
       res = response();

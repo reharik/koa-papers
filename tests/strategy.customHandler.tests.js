@@ -5,13 +5,15 @@ var strategy = require('./helpers/testStrategy');
 var chai = require('chai');
 var expect = chai.expect;
 chai.should();
+var co = require('co');
 
-describe('CUSTOM_HANDLER', () => {
+describe.only('CUSTOM_HANDLER', () => {
   describe('when_fail_is_called_with_customHander', () => {
     let SUT = undefined;
     let req;
     let res;
     let nextArg;
+    let next;
     let customHandlerArg;
     beforeEach((done) => {
       req = request();
@@ -24,8 +26,11 @@ describe('CUSTOM_HANDLER', () => {
         }
       };
       SUT = papers().registerMiddleware(config);
-      SUT(req, res, ()=> {nextArg='next called'});
-      setTimeout(done,10);
+      co(function *(){
+        ctx = {request:req, response: res};
+        yield SUT.call(ctx, [next]);
+        done()
+      });
     });
 
     it('should_pass_result_to_handler', () => {
@@ -48,6 +53,7 @@ describe('CUSTOM_HANDLER', () => {
     let nextArg;
     let customHandlerArg;
     let standardizedResult = { errorMessage:'some error', statusCode:500, exception:'some error'};
+    let next = (arg)=> {nextArg=arg};
     beforeEach((done) => {
       req = request();
       res = response();
@@ -59,8 +65,11 @@ describe('CUSTOM_HANDLER', () => {
         }
       };
       SUT = papers().registerMiddleware(config);
-      SUT(req, res, (arg)=> {nextArg=arg});
-      setTimeout(done,10);
+      co(function *(){
+        ctx = {request:req, response: res};
+        yield SUT.call(ctx, [next]);
+        done()
+      });
     });
 
     it('should_pass_result_to_handler', () => {
@@ -84,6 +93,7 @@ describe('CUSTOM_HANDLER', () => {
     let customHandlerArg;
     let user;
     let result;
+    let next = (arg)=> {nextArg='next called'};
     beforeEach((done) => {
       req = request();
       res = response();
@@ -97,8 +107,11 @@ describe('CUSTOM_HANDLER', () => {
         }
       };
       SUT = papers().registerMiddleware(config);
-      SUT(req, res, (arg)=> {nextArg='next called'});
-      setTimeout(done,10);
+      co(function *(){
+        ctx = {request:req, response: res};
+        yield SUT.call(ctx, [next]);
+        done()
+      });
     });
 
     it('should_pass_result_to_handler', () => {

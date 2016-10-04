@@ -2,7 +2,7 @@ var SUT = require('./../src/papers');
 var chai = require('chai');
 chai.should();
 
-describe('PAPERS', () => {
+describe.only('PAPERS', () => {
   describe('when_calling_with_no_config_values', () => {
     it('should_throw_proper_error', () => {
       var result;

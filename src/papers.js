@@ -2,25 +2,24 @@ const co = require('co');
 var createAuthenticationMiddleware = require('./authenticationMiddleware');
 
 module.exports = function() {
-
-  logIn = function (req, user, papers) {
+  const logIn = function (req, user, papers) {
     req[papers.options.userProperty] = user;
     let session = req.session && req.session[papers.options.key] ? req.session[papers.options.key] : null;
 
     if (!session) {
       return;
     }
-    
+
     papers.functions.serializeUser(user, papers)
-        .then(result => {
-          session.user = result;
-        })
-        .catch(err => {
-          throw err
-        });
+      .then(result => {
+        session.user = result;
+      })
+      .catch(err => {
+        throw err
+      });
   };
 
-  logOut = function (req, userProperty, key) {
+  const logOut = function (req, userProperty, key) {
     return function () {
       req[userProperty] = null;
       if (req.session && req.session[key]) {
@@ -29,8 +28,7 @@ module.exports = function() {
     }
   };
 
-
-  isAuthenticated = function (req) {
+  const isAuthenticated = function (req) {
     return function () {
       if(req.user || req.session && req.session[req._papers.key] && req.session[req._papers.key].user){
         return true;
@@ -39,7 +37,7 @@ module.exports = function() {
     };
   };
 
-  serializeUser = function (user, papers) {
+  const serializeUser = function (user, papers) {
     // private implementation that traverses the chain of serializers, attempting
     // to serialize a user
     return co(function *iterateStrategies() {
@@ -57,7 +55,7 @@ module.exports = function() {
     });
   };
 
-  deserializeUser = function (user, papers) {
+  const deserializeUser = function (user, papers) {
     return co(function *iterateStrategies() {
       for (strategy of papers.functions.deserializers) {
         if (!strategy) {
@@ -76,7 +74,7 @@ module.exports = function() {
     })
   };
 
-  transformAuthInfo = function (info, papers) {
+  const transformAuthInfo = function (info, papers) {
     for (let i = 0; papers.functions.infoTransformers; i++) {
 
       var layer = papers.functions.infoTransformers[i];
