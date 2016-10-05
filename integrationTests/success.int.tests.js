@@ -1,6 +1,7 @@
-var express = require('express');
+var koa = require('koa');
+var request = require('supertest-koa-agent');
+var router = require('koa-router')();
 var setups = require('./setups');
-var request = require('supertest');
 
 var chai = require('chai');
 var expect = chai.expect;
@@ -12,21 +13,23 @@ describe('SUCCESS', ()=> {
     var SUTRequest;
     let app;
     before(() => {
-      app = express();
-      app.use(setups.basicSuccess(app));
-      app.get("/", function (req, res) {
-        SUTRequest = req;
-        res.send("end");
+      app = koa();
+
+      router.post("/", function *() {
+        SUTRequest = this;
+        this.body = {the:"end"};
       });
+      app.use(setups.basicSuccess(app));
+      app.use(router.routes());
     });
 
     it("should_put_user_on_request", (done) => {
       request(app)
-        .get('/')
+        .post('/')
         .expect((res)=> {
-          SUTRequest.user.name.should.equal('bubba');
+          SUTRequest.request.user.name.should.equal('bubba');
         })
-        .expect(200, done)
+        .expect(200, done);
     })
   })
 

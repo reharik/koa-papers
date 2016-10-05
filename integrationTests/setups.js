@@ -12,9 +12,9 @@ var basicSuccess = (app) => {
         strategies: [strategy]
     };
 
-    app.use(function (req, res, next) {
-        req.body = {username:'bubba', password:'likesit'};
-        next()
+    app.use(function *(next) {
+        this.body = {username:'bubba', password:'likesit'};
+        yield next;
     });
 
     return papers().registerMiddleware(papersConfig);
@@ -30,9 +30,9 @@ var basicFail = (app) => {
         strategies: [strategy]
     };
 
-    app.use(function (req, res, next) {
-        req.body = {username:'bubba', password:'likesit'};
-        next()
+    app.use(function *(next) {
+        this.body = {username:'bubba', password:'likesit'};
+        yield next
     });
 
     return papers().registerMiddleware(papersConfig);
@@ -58,9 +58,9 @@ var redirect = (app) => {
         strategies: [strategy]
     };
 
-    app.use(function (req, res, next) {
-        req.body = {username:'bubba', password:'likesit'};
-        next()
+    app.use(function *(next) {
+        this.body = {username:'bubba', password:'likesit'};
+        yield next
     });
 
     return papers().registerMiddleware(papersConfig);
@@ -74,9 +74,9 @@ var error = (app) => {
         strategies: [strategy]
     };
 
-    app.use(function (req, res, next) {
-        req.body = {username:'bubba', password:'likesit'};
-        next()
+    app.use(function *(next) {
+        this.body = {username:'bubba', password:'likesit'};
+        yield next
     });
 
     return papers().registerMiddleware(papersConfig);
@@ -121,9 +121,9 @@ var customHandlerSuccess = () => {
 
     var papersConfig = {
         strategies: [strategy],
-        customHandler: (req, res, next, result) => {
-            req.customUser = result.details.user.username;
-            next();
+        customHandler: function *(ctx, next, result) {
+            ctx.request.customUser = result.details.user.username;
+            yield next;
         }
     };
     return papers().registerMiddleware(papersConfig);
@@ -134,8 +134,8 @@ var customHandlerFailure = () => {
 
     var papersConfig = {
         strategies: [strategy],
-        customHandler: (req, res, next, result) => {
-            next();
+        customHandler: (ctx, next, result) => {
+            // yield next;
         }
     };
     return papers().registerMiddleware(papersConfig);
@@ -146,9 +146,8 @@ var customHandlerError = () => {
 
     var papersConfig = {
         strategies: [strategy],
-        customHandler: (req, res, next, result) => {
-            req.customError = result.errorMessage;
-            next();
+        customHandler: function (ctx, next, result) {
+            ctx.status = 500;
         }
     };
     return papers().registerMiddleware(papersConfig);

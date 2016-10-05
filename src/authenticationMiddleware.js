@@ -12,32 +12,32 @@ const checkSessionForAuth = require('./checkSessionForAuth');
 module.exports = (papers) => {
 
   return function *(next) {
-
     /********* check session for auth *************/
-    const checkSession = (res, req, ctx, papers) =>  {
+    const checkSession = (ctx, papers) =>  {
       return co(function *checkSessionGen() {
         return yield checkSessionForAuth(papers, ctx);
       }).catch(ex => {
         console.log('==========ex=========');
         console.log(ex);
         console.log('==========END ex=========');
-        res.status = 500;
-        res.body = `${http.STATUS_CODES[500]} \n ${ex.message} \n ${ex}`;
+        ctx.response.status = 500;
+        ctx.response.body = `${http.STATUS_CODES[500]} \n ${ex.message} \n ${ex}`;
       })
     };
 
     /********* iterate strategies *************/
-    const iterateStrategies = (res, req, papers) => {
+    const iterateStrategies = (ctx, papers) => {
       return co(function *iterateStrategies() {
         let failures = [];
-
         for (let strategy of papers.functions.strategies) {
 
           if (!strategy) {
             continue;
           }
 
-          const stratResult = strategy.authenticate(req, papers);
+          const authenticate = strategy.authenticate(ctx, papers);
+          const stratResult = authenticate && typeof authenticate.then === 'function' ? yield authenticate : authenticate;
+
           if (!stratResult || !stratResult.type) {
             continue
           }
@@ -50,7 +50,7 @@ module.exports = (papers) => {
             }
             case 'redirect':
             {
-              return {type: 'redirect', value: redirect(res, stratResult.details.url, stratResult.details.statusCode)};
+              return {type: 'redirect', value: redirect(ctx, stratResult.details.url, stratResult.details.statusCode)};
             }
             case 'error':
             {
@@ -58,38 +58,40 @@ module.exports = (papers) => {
             }
             case 'success':
             {
-              return handleSuccess(stratResult, req, res, papers);
+              return yield handleSuccess(stratResult, ctx, papers);
             }
           }
         }
-        return handleFailurePostIteration(failures, res, papers);
+        return handleFailurePostIteration(failures, ctx, papers);
       }).catch(ex => {
         console.log('==========ex=========');
         console.log(ex);
         console.log('==========END ex=========');
-        res.status = 500;
-        res.body = `${http.STATUS_CODES[500]} \n ${ex.message} \n ${ex}`;
+        ctx.status = 500;
+        ctx.body = `${http.STATUS_CODES[500]} \n ${ex.message} \n ${ex}`;
       });
     };
 
-    let req = this.request;
-    let res = this.response;
     let ctx = this;
     
     /********* add convenience methods to req *************/
-    req.logOut = papers.functions.logOut(req, papers.options.userProperty, papers.options.key);
-    req.isAuthenticated = papers.functions.isAuthenticated(req);
+    ctx.logOut = papers.functions.logOut(ctx, papers.options.userProperty, papers.options.key);
+    ctx.isAuthenticated = papers.functions.isAuthenticated(ctx);
 
-    const hasSession = yield checkSession(res, req, ctx, papers);
+    const hasSession = yield checkSession(ctx, papers);
     // this is strange logic but necessary to handle hasSession throwing
     let result = hasSession && !hasSession.isLoggedIn
-      ? yield iterateStrategies(res, req, papers)
+      ? yield iterateStrategies(ctx, papers)
       : {type: 'session'};
 
     switch (result.type) {
       case 'customHandler':
       {
-        papers.functions.customHandler(req, res, next, result.value);
+        if(papers.functions.customHandler.constructor.name === 'GeneratorFunction') {
+          yield co(papers.functions.customHandler(ctx, next, result.value));
+          return;
+        }
+        papers.functions.customHandler(ctx, next, result.value);
         return;
       }
       case 'error':
@@ -109,7 +111,7 @@ module.exports = (papers) => {
       }
       default:
       {
-        res.body = res.body || http.STATUS_CODES[res.status];
+        ctx.body = ctx.body || http.STATUS_CODES[ctx.status];
         return;
       }
     }

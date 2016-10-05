@@ -2,15 +2,15 @@ const co = require('co');
 var createAuthenticationMiddleware = require('./authenticationMiddleware');
 
 module.exports = function() {
-  const logIn = function (req, user, papers) {
-    req[papers.options.userProperty] = user;
-    let session = req.session && req.session[papers.options.key] ? req.session[papers.options.key] : null;
+  const logIn = function *(ctx, user, papers) {
+    ctx.request[papers.options.userProperty] = user;
+    let session = ctx.session && ctx.session[papers.options.key] ? ctx.session[papers.options.key] : null;
 
     if (!session) {
       return;
     }
 
-    papers.functions.serializeUser(user, papers)
+    yield papers.functions.serializeUser(user, papers)
       .then(result => {
         session.user = result;
       })
@@ -19,18 +19,18 @@ module.exports = function() {
       });
   };
 
-  const logOut = function (req, userProperty, key) {
+  const logOut = function (ctx, userProperty, key) {
     return function () {
-      req[userProperty] = null;
-      if (req.session && req.session[key]) {
-        delete req.session[key].user;
+      ctx.request[userProperty] = null;
+      if (ctx.session && ctx.session[key]) {
+        delete ctx.session[key].user;
       }
     }
   };
 
-  const isAuthenticated = function (req) {
+  const isAuthenticated = function (ctx) {
     return function () {
-      if(req.user || req.session && req.session[req._papers.key] && req.session[req._papers.key].user){
+      if(ctx.request.user || ctx.session && ctx.session[ctx._papers.key] && ctx.session[ctx._papers.key].user){
         return true;
       }
       return false;

@@ -1,6 +1,7 @@
-var express = require('express');
 var setups = require('./setups');
-var request = require('supertest');
+var koa = require('koa');
+var request = require('supertest-koa-agent');
+var router = require('koa-router')();
 
 var chai = require('chai');
 var expect = chai.expect;
@@ -12,17 +13,18 @@ describe('FAIL', ()=> {
     var SUTRequest;
     let app;
     before(() => {
-      app = express();
-      app.use(setups.basicFail(app));
-      app.get("/", function (req, res) {
-        SUTRequest = req;
-        res.send("end");
+      app = koa();
+      router.post("/", function *() {
+        SUTRequest = this;
+        this.body = {the:"end"};
       });
+      app.use(setups.basicFail(app));
+      app.use(router.routes());
     });
 
     it("should_put_error_in_headers_and_return_401", (done) => {
       request(app)
-        .get('/')
+        .post('/')
         .expect("WWW-Authenticate", 'authentication failed')
         .expect(401, done)
     })
@@ -34,17 +36,18 @@ describe('FAIL TWICE', ()=> {
     var SUTRequest;
     let app;
     before(() => {
-      app = express();
-      app.use(setups.failTwice(app));
-      app.get("/", function (req, res) {
-        SUTRequest = req;
-        res.send("end");
+      app = koa();
+     router.post("/", function *() {
+        SUTRequest = this;
+        this.body = {the:"end"};
       });
+      app.use(setups.failTwice(app));
+      app.use(router.routes());
     });
 
     it("should_put_error_in_headers_and_return_401", (done) => {
       request(app)
-        .get('/')
+        .post('/')
         .expect("WWW-Authenticate", 'wtf! soemthing happened!, wtf! soemthing happened! again!!!')
         .expect(401, done)
     })
@@ -59,19 +62,25 @@ describe('FAIL WITH_ERROR', ()=> {
     var SUTRequest;
     let app;
     before(() => {
-      app = express();
-      app.use(setups.failWithError(app));
-      app.get("/", function (req, res) {
-        SUTRequest = req;
-        res.send("end");
+      app = koa();
+     router.post("/", function *() {
+        SUTRequest = this;
+        this.body = {the:"end"};
       });
+      app.use(setups.failWithError(app));
+      app.use(router.routes());
+
     });
 
-    it("should_put_error_in_headers_and_return_401", (done) => {
+    it("should_put_error_in_body_and_return_500", (done) => {
       request(app)
         .get('/')
-        .expect("WWW-Authenticate", 'wtf! soemthing happened!, wtf! soemthing happened! again!!!')
-        .expect(401, done)
+        // .expect(function(res) {
+        //   console.log('==========res=========');
+        //   console.log(res);
+        //   console.log('==========END res=========');
+        //   res.body.should.equal('unauthorized')})
+        .expect(500, done)
     })
   })
 });
@@ -82,7 +91,7 @@ describe('FAIL WITH_ERROR', ()=> {
   //   var SUTRequest;
   //   let app;
   //   before(() => {
-  //     app = express();
+  //     app = koa();
   //     app.use(setups.failureRedirect(app));
   //     app.get("/", function (req, res) {
   //       SUTRequest = req;

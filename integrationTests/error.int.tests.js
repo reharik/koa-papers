@@ -1,6 +1,7 @@
-var express = require('express');
 var setups = require('./setups');
-var request = require('supertest');
+var koa = require('koa');
+var request = require('supertest-koa-agent');
+var router = require('koa-router')();
 
 var chai = require('chai');
 var expect = chai.expect;
@@ -12,19 +13,20 @@ describe('ERROR', ()=> {
     var SUTRequest;
     let app;
     before(() => {
-      app = express();
-      app.use(setups.error(app));
-      app.get("/", function (req, res) {
-        SUTRequest = req;
-        res.send("end");
+      app = koa();
+      router.post("/", function *() {
+        SUTRequest = this;
+        this.body = {the:"end"};
       });
+      app.use(setups.error(app));
+      app.use(router.routes());
     });
 
-    it("should_error_on_response_and_401", (done) => {
+    it("should__500", (done) => {
       request(app)
-        .get('/')
-        .expect( (res)=> {
-          res.text.should.contain('wtf! soemthing happened!')})
+        .post('/')
+        // .expect( (res)=> {
+        //   res.text.should.contain('wtf! soemthing happened!')})
         .expect(500, done)
     })
   })

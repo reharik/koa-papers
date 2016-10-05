@@ -1,6 +1,6 @@
 
-module.exports = (res, url, status) => {
-  res.status = status || 302;
-  res.set('Location', url);
-  res.set('Content-Length', '0');
+module.exports = (ctx, url, status) => {
+  ctx.status = status || 302;
+  ctx.set('Location', url);
+  ctx.set('Content-Length', '0');
 };

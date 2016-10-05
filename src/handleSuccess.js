@@ -1,7 +1,9 @@
 const redirect = require('./redirect');
+const co = require('co');
 
-module.exports = (stratResult, req, res, papers) => {
+module.exports = function *(stratResult, ctx, papers) {
   if (papers.functions.customHandler) {
+
     return {type: 'customHandler', result: 'success', value: stratResult};
   }
 
@@ -27,7 +29,9 @@ module.exports = (stratResult, req, res, papers) => {
   //   return {type: 'success'};
   // }
 
-  papers.functions.logIn(req, stratResult.details.user, papers);
+  yield co(function *logInGen(){
+    yield papers.functions.logIn(ctx, stratResult.details.user, papers);
+  });
 
   // /********* authInfo *************/
   // if (clientOptions.authInfo !== false) {
@@ -35,12 +39,12 @@ module.exports = (stratResult, req, res, papers) => {
   // }
 
   /********* redirect *************/
-  var redirectUrl = req.session && req.session.returnTo ? req.session.returnTo : papers.options.successRedirect;
-  if (req.session) {
-    delete req.session.returnTo;
+  var redirectUrl = ctx.session && ctx.session.returnTo ? ctx.session.returnTo : papers.options.successRedirect;
+  if (ctx.session) {
+    delete ctx.session.returnTo;
   }
   if (redirectUrl) {
-    return {type: 'redirect', value: redirect(res, redirectUrl, 200)};
+    return {type: 'redirect', value: redirect(ctx, redirectUrl, 200)};
   }
   return {type: 'success'};
 };
