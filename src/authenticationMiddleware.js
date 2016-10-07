@@ -104,11 +104,16 @@ module.exports = (papers) => {
         ctx.throw('error', result.value, 500);
         break;
       }
+      case 'session':
       case 'success':
       {
         yield next;
         break;
       }
+      // what is this returing on, what do I expect to fall through.
+      // I know that session might be falling through and that should
+      // not end but continue down the middle ware chain
+        // this is why I put session up with success.  it seems to work
       default:
       {
         ctx.body = ctx.body || http.STATUS_CODES[ctx.status];
