@@ -33,8 +33,8 @@ describe('MULTIPLE_SUCCESS_RESPONSES', () => {
     });
 
     it('should_put_first_success_on_req_and_not_process_others', () => {
-      ctx.request.user.name.should.equal('frank');
-      ctx.request.user.name.should.not.equal('frank1');
+      ctx.state.user.name.should.equal('frank');
+      ctx.state.user.name.should.not.equal('frank1');
     });
   });
 
@@ -62,7 +62,7 @@ describe('MULTIPLE_SUCCESS_RESPONSES', () => {
     });
 
     it('should_put_first_success_on_req', () => {
-      ctx.request.user.name.should.equal('frank2');
+      ctx.state.user.name.should.equal('frank2');
     });
 
     it('should_not_set_res_header_WWWW-Authenticate', () => {
@@ -95,7 +95,7 @@ describe('MULTIPLE_SUCCESS_RESPONSES', () => {
     });
 
     it('should_put_first_success_on_req', () => {
-      ctx.request.user.name.should.equal('frank2');
+      ctx.state.user.name.should.equal('frank2');
     });
 
     it('should_not_set_res_header_WWWW-Authenticate', () => {

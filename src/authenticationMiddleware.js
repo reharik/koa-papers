@@ -4,8 +4,6 @@ const handleFailurePostIteration = require('./handleFailurePostIteration');
 const handleSuccess = require('./handleSuccess');
 const handleError = require('./handleError');
 const standardizeErrors = require('./standardizeErrors');
-
-const redirect = require('./redirect');
 const checkSessionForAuth = require('./checkSessionForAuth');
 
 
@@ -14,9 +12,8 @@ module.exports = (papers) => {
   return function *(next) {
     /********* check session for auth *************/
     const checkSession = (ctx, papers) =>  {
-      return co(function *checkSessionGen() {
-        return yield checkSessionForAuth(papers, ctx);
-      }).catch(ex => {
+      return co(checkSessionForAuth(papers, ctx))
+        .catch(ex => {
         console.log('==========ex=========');
         console.log(ex);
         console.log('==========END ex=========');
@@ -50,7 +47,7 @@ module.exports = (papers) => {
             }
             case 'redirect':
             {
-              return {type: 'redirect', value: redirect(ctx, stratResult.details.url, stratResult.details.statusCode)};
+              return {type: 'redirect', details: {url: stratResult.details.url, statusCode:stratResult.details.statusCode}};
             }
             case 'error':
             {
@@ -104,11 +101,17 @@ module.exports = (papers) => {
         ctx.throw('error', result.value, 500);
         break;
       }
+      case 'failAndContinue':
       case 'session':
       case 'success':
       {
         yield next;
         break;
+      }
+      case 'redirect': {
+        ctx.status = result.details.status || ctx.status || 303;
+        ctx.redirect(result.details.url);
+        return;
       }
       // what is this returing on, what do I expect to fall through.
       // I know that session might be falling through and that should

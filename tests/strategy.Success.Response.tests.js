@@ -30,7 +30,7 @@ describe('SUCCESS_RESPONSE', () => {
     });
 
     it('should_put_user_on_req', () => {
-      ctx.request.user.should.eql(user)
+      ctx.state.user.should.eql(user)
     });
     //TODO can't figure out how to tell if next is yielded
     it.skip('should_call_next', () => {
@@ -74,7 +74,7 @@ describe('SUCCESS_RESPONSE', () => {
     });
 
     it('should_put_user_on_req', () => {
-      ctx.request.user.should.eql( { name: 'bubba', serialized: true } )
+      ctx.state.user.should.eql( { name: 'bubba', serialized: true } )
     });
 
     it('should_put_serialize_and_put_user_in_papers_session', () => {
@@ -102,9 +102,11 @@ describe('SUCCESS_RESPONSE', () => {
       var myStrategy = strategy({type:'success', details: {user}});
       var config = {
         strategies: [myStrategy],
-        serializers: [(user)=>{user.serialized=true; return user}]
+        serializers: [(user)=>{user.serialized=true; return user}],
+        deserializers: [(user)=>{return user}],
+        useSession: true
       };
-      ctx.session = {returnTo: 'some.url', papers: {}};
+      ctx.session = {returnTo: 'some.url'};
 
       SUT = papers().registerMiddleware(config);
       co(function *(){
@@ -114,7 +116,7 @@ describe('SUCCESS_RESPONSE', () => {
     });
 
     it('should_put_user_on_req', () => {
-      ctx.request.user.should.eql( { name: 'bubba', serialized: true } )
+      ctx.state.user.should.eql( { name: 'bubba', serialized: true } )
     });
 
     it('should_put_user_in_papers_session', () => {
@@ -149,7 +151,10 @@ describe('SUCCESS_RESPONSE', () => {
       var config = {
         successRedirect: "a.great.url",
         strategies: [myStrategy],
-        serializers: [(user)=>{user.serialized=true; return user}]
+        serializers: [(user)=>{user.serialized=true; return user}],
+        deserializers: [(user)=>{return user}],
+        useSession: true
+
       };
       ctx.session = {papers: {}};
 
@@ -161,7 +166,7 @@ describe('SUCCESS_RESPONSE', () => {
     });
 
     it('should_put_user_on_req', () => {
-      ctx.request.user.should.eql( { name: 'bubba', serialized: true } )
+      ctx.state.user.should.eql( { name: 'bubba', serialized: true } )
     });
 
     it('should_redirect_to_said_url', () => {

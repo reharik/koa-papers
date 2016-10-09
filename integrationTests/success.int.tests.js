@@ -27,7 +27,7 @@ describe('SUCCESS', ()=> {
       request(app)
         .post('/')
         .expect((res)=> {
-          SUTRequest.request.user.name.should.equal('bubba');
+          SUTRequest.state.user.name.should.equal('bubba');
         })
         .expect(200, done);
     })

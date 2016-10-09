@@ -66,11 +66,15 @@ describe('AUTHENTICATION', () => {
     let SUT;
     let ctx;
     let user;
-    let next = ()=>{}
+
     beforeEach((done) => {
       user = { name: 'bubba' };
       ctx = context();
       var myStrategy = strategy({type:'pass'});
+      let next = (arg) => {
+        nextArg = 'calledNext';
+        done();
+      };
       var config = {
         strategies:[myStrategy],
         serializers:[()=>{ Promise.resolve()}],
@@ -87,7 +91,7 @@ describe('AUTHENTICATION', () => {
     });
 
     it('should_put_user_on_res', () => {
-      ctx.request.user.should.eql(user);
+      ctx.state.user.should.eql(user);
     })
   });
 

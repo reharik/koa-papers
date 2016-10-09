@@ -64,6 +64,35 @@ describe('FAIL_RESPONSE', () => {
     });
   });
 
+  describe('when_fail_is_called_by_strategy_and_failAndContinue_specified', () => {
+    let SUT = undefined;
+    let ctx;
+    let nextArg;
+
+    beforeEach((done) => {
+      ctx = context();
+      var myStrategy = strategy({type: 'fail', details: {error: 'auth failed'}});
+      var config = {
+        strategies: [myStrategy],
+        failAndContinue: true
+      };
+
+      let next = ()=> {nextArg='next Called'; done()};
+      SUT = papers().registerMiddleware(config);
+      co(function *() {
+        yield SUT.call(ctx, [next]);
+      });
+    });
+
+    it('should_call_next_after_failing', () => {
+      nextArg.should.equal('next Called');
+    });
+
+    it('should_set_res_header_WWWW-Authenticate_to_error_message', () => {
+      ctx.get('WWW-Authenticate')[0].should.equal('auth failed');
+    });
+  });
+
   describe('when_fail_is_called_by_strategy_and_failureRedirect', () => {
     let SUT = undefined;
     let ctx;

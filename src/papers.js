@@ -3,27 +3,21 @@ var createAuthenticationMiddleware = require('./authenticationMiddleware');
 
 module.exports = function() {
   const logIn = function *(ctx, user, papers) {
-    ctx.request[papers.options.userProperty] = user;
-    let session = ctx.session && ctx.session[papers.options.key] ? ctx.session[papers.options.key] : null;
+    ctx.state[papers.options.userProperty] = user;
 
-    if (!session) {
+    if(!papers.options.useSession || !ctx.session){
       return;
     }
 
-    yield papers.functions.serializeUser(user, papers)
-      .then(result => {
-        session.user = result;
-      })
-      .catch(err => {
-        throw err
-      });
+    ctx.session[papers.options.key] = {};
+    ctx.session[papers.options.key].user = yield papers.functions.serializeUser(user, papers);
   };
 
   const logOut = function (ctx, userProperty, key) {
     return function () {
       ctx.request[userProperty] = null;
       if (ctx.session && ctx.session[key]) {
-        delete ctx.session[key].user;
+        delete ctx.session[key];
       }
     }
   };
@@ -107,6 +101,7 @@ module.exports = function() {
         )){
         throw new Error('You must provide at least one user serializer and one user deserializer if you want to use session.');
       }
+
       //TODO put some validation in for more of this.
       const papers = {
         functions: {
@@ -129,6 +124,7 @@ module.exports = function() {
           koa: true,
           failureRedirect: config.failureRedirect,
           successRedirect: config.successRedirect,
+          failAndContinue: config.failAndContinue,
           failWithError: config.failWithError,
           assignProperty: config.assignProperty
         }

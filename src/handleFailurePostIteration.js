@@ -1,6 +1,4 @@
 const http = require('_http_server');
-const redirect = require('./redirect');
-
 
 module.exports = (failures, ctx, papers) => {
   if (failures.length <= 0) {
@@ -33,8 +31,11 @@ module.exports = (failures, ctx, papers) => {
   }
   const redirectOnFailureUrl = papers.options.failureRedirect;
   if (redirectOnFailureUrl) {
-    redirect(ctx, redirectOnFailureUrl);
-    return {type  : 'redirect'};
+    return {type  : 'redirect', details: {url: redirectOnFailureUrl}};
+  }
+  
+  if(papers.options.failAndContinue){
+    return {type  : 'failAndContinue'};
   }
 
   return {type: 'fallThrough'};

@@ -5,7 +5,9 @@ module.exports = function context() {
   var status = 200;
   var _headers = {};
   var body = '';
+  var state = {};
   var request = _request();
+  var response = {body};
   var get = function (name) {
     return this._headers[name];
   };
@@ -19,11 +21,15 @@ module.exports = function context() {
     this.body = msg;
   };
 
+
+
    return {
      status,
      _headers,
      body,
      request,
+       response,
+     state,
      set,
      get,
      throw:_throw

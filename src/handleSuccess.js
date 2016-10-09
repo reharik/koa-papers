@@ -1,9 +1,8 @@
-const redirect = require('./redirect');
 const co = require('co');
 
 module.exports = function *(stratResult, ctx, papers) {
+  ctx.status = 200;
   if (papers.functions.customHandler) {
-
     return {type: 'customHandler', result: 'success', value: stratResult};
   }
 
@@ -44,7 +43,11 @@ module.exports = function *(stratResult, ctx, papers) {
     delete ctx.session.returnTo;
   }
   if (redirectUrl) {
-    return {type: 'redirect', value: redirect(ctx, redirectUrl, 200)};
+    return {type  : 'redirect', details: {url: redirectUrl, status: 200}};
+  }
+  
+  if(papers.options.successWithBody){
+    ctx.body = papers.options.successWithBody;
   }
   return {type: 'success'};
 };
