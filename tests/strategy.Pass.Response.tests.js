@@ -70,9 +70,10 @@ describe('PASS_RESPONSE', () => {
   describe('when_no_strategy_is_successful_and_no_specific_errors_and_failureRedirect', () => {
     let SUT = undefined;
     let ctx;
-    let next = (arg)=> {nextArg=arg};
+    let nextArg;
     beforeEach((done) => {
       ctx = context();
+      ctx.redirect = (arg)=> {nextArg=arg};
       var myStrategy = strategy({type:'pass'});
       var config = {
         strategies: [myStrategy],
@@ -81,21 +82,17 @@ describe('PASS_RESPONSE', () => {
       
       SUT = papers().registerMiddleware(config);
       co(function *(){
-        yield SUT.call(ctx, [next]);
+        yield SUT.call(ctx, [()=>{}]);
         done();
       });
     });
 
     it('should_call_next_with_proper_arg', () => {
-      ctx.status.should.equal(302);
+      ctx.status.should.equal(401);
     });
 
     it('should_put_proper_url_on_location_header', () => {
-      ctx.get('Location').should.equal('some.url');
-    });
-
-    it('should_set_content-length_to_0', () => {
-      ctx.get('Content-Length').should.equal('0');
+      nextArg.should.equal('some.url');
     });
 
     it('should_set_res_header_WWWW-Authenticate_to_error_message', () => {

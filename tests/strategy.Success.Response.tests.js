@@ -94,8 +94,8 @@ describe('SUCCESS_RESPONSE', () => {
 
     beforeEach((done) => {
       ctx = context();
-      var next = (arg) => {
-        nextArg = 'calledNext';
+      ctx.redirect = (arg) => {
+        nextArg = arg;
         done();
       };
       user = {name: 'bubba'};
@@ -110,8 +110,7 @@ describe('SUCCESS_RESPONSE', () => {
 
       SUT = papers().registerMiddleware(config);
       co(function *(){
-        yield SUT.call(ctx, [next]);
-        done();
+        yield SUT.call(ctx, [()=>{}]);
       });
     });
 
@@ -129,8 +128,7 @@ describe('SUCCESS_RESPONSE', () => {
 
     it('should_redirect_to_said_url', () => {
       ctx.status.should.equal(200);
-      ctx.get('Location').should.equal('some.url');
-      ctx.get('Content-Length').should.equal('0');
+      nextArg.should.equal('some.url');
     });
   });
 
@@ -142,9 +140,8 @@ describe('SUCCESS_RESPONSE', () => {
 
     beforeEach((done) => {
       ctx = context();
-      var next = (arg) => {
-        nextArg = 'calledNext';
-        done();
+      ctx.redirect = (arg) => {
+        nextArg = arg;
       };
       user = {name: 'bubba'};
       var myStrategy = strategy({type:'success', details: {user}});
@@ -160,7 +157,7 @@ describe('SUCCESS_RESPONSE', () => {
 
       SUT = papers().registerMiddleware(config);
       co(function *(){
-        yield SUT.call(ctx, [next]);
+        yield SUT.call(ctx, [()=>{}]);
         done();
       });
     });
@@ -171,8 +168,7 @@ describe('SUCCESS_RESPONSE', () => {
 
     it('should_redirect_to_said_url', () => {
       ctx.status.should.equal(200);
-      ctx.get('Location').should.equal('a.great.url');
-      ctx.get('Content-Length').should.equal('0');
+      nextArg.should.equal('a.great.url');
     });
   });
 
@@ -184,9 +180,8 @@ describe('SUCCESS_RESPONSE', () => {
 
     beforeEach((done) => {
       ctx = context();
-      var next = (arg) => {
-        nextArg = 'calledNext';
-        done();
+      ctx.redirect = (arg) => {
+        nextArg = arg;
       };
       user = {name: 'bubba'};
       var myStrategy = strategy({type:'success', details: {user}});
@@ -199,13 +194,13 @@ describe('SUCCESS_RESPONSE', () => {
 
       SUT = papers().registerMiddleware(config);
       co(function *(){
-        yield SUT.call(ctx, [next]);
+        yield SUT.call(ctx, [()=>{}]);
         done();
       });
     });
 
     it('should_allow_return_to_to_take_precedence', () => {
-      ctx.get('Location').should.equal('some.url');
+      nextArg.should.equal('some.url');
     });
   });
 });

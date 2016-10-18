@@ -109,7 +109,7 @@ module.exports = (papers) => {
         break;
       }
       case 'redirect': {
-        ctx.status = result.details.status || ctx.status || 303;
+        ctx.status = result.details.statusCode || ctx.status || 303;
         ctx.redirect(result.details.url);
         return;
       }

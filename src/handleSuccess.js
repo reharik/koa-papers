@@ -43,7 +43,7 @@ module.exports = function *(stratResult, ctx, papers) {
     delete ctx.session.returnTo;
   }
   if (redirectUrl) {
-    return {type  : 'redirect', details: {url: redirectUrl, status: 200}};
+    return {type  : 'redirect', details: {url: redirectUrl, statusCode: 200}};
   }
   
   if(papers.options.successWithBody){
