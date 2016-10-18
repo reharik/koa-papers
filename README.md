@@ -1,11 +1,31 @@
-# Paper
+# Papers
 
 
-Paper is promise based authentication
+Papers is promise based authentication
 middleware for [Node.js](http://nodejs.org/).
 
-Paper's sole purpose is to authenticate requests, which it does through an
-extensible set of plugins known as _strategies_.  
+Papers authenticates requests through an
+extensible set of plugins known as _strategies_.
+
+Papers was inspired by the callback based authentication
+system [Passport](http://passportjs.org/).
+Feature parity is almost complete, except for a few minor items that I couldn't
+figure out a use case for.
+
+If there are any Passport features that are missing that you need
+I would be happy to implement them.
+
+## Why Papers
+  - Not a fan of callbacks, and found passport logic very difficult to follow
+  - I have also had a difficult time in the past figuring out/using Passport.
+  - More functional style with less/no state if possible.  
+
+## Key differences
+  - Papers uses promises and co routines to handle the async or potentially async
+  processes involved in authentication
+  - Papers only extends the request with two functions (isAuthenticated and logout)
+  and one property (user or whatever you set the userProperty to be).  It does not touch your strategies
+  - Papers setup is different (simpler and more concise in my view).
 
 ## Install
 
@@ -15,59 +35,91 @@ $ npm install paper
 
 ## Usage
 
+```javascript
+var myStrategy = localStrategy(function(username, password) {
+    // retrieve your user in some way.  
+    // if you get an error or it fails to find user
+    // return type: 'error' or type: 'fail'
+    return {type: 'success', details: {user: user}};
+));
+
+var serializeUser = function(user) {
+  return user.id;
+});
+
+var deserializeUser = function(id) {
+  // retrieve your user again in someway
+  return User.findById(id);
+});
+
+var papersConfig = {
+  strategies: [ myStrategy ],
+  useSession: true,
+  serializers: [ serializeUser ],
+  deserializers: [ deserializeUser ]
+}
+
+app.use(papers().registerMiddleware(config));
+```
+
 #### Strategies
 
-Paper uses the concept of strategies to authenticate requests.  Strategies
+Papers uses the concept of strategies to authenticate requests.  Strategies
 can range from verifying username and password credentials, delegated
 authentication using [OAuth](http://oauth.net/) (for example, via [Facebook](http://www.facebook.com/)
 or [Twitter](http://twitter.com/)), or federated authentication using [OpenID](http://openid.net/).
 
-Before authenticating requests, the strategy (or strategies) used by an
-application must be configured.
+Every strategy necessarily is different. You are responsible for supplying your chosen strategy(ies)
+with what they need to authenticat.
 
-```javascript
-paper.use(new LocalStrategy(
-  function(username, password, done) {
-    User.findOne({ username: username }, function (err, user) {
-      if (err) { return done(err); }
-      if (!user) { return done(null, false); }
-      if (!user.verifyPassword(password)) { return done(null, false); }
-      return done(null, user);
-    });
-  }
-));
-```
+The local strategy is the simplest and most familiar, it requires a function that takes a username and password.
+Neither the strategy nor Papers could know how users are stored in your system.  So you must implement that verification.
+But in the end, you either return an error, a failure, or a user.
+In fact, all strategies ultimately will return either an error, a failure or a user.
 
-There are 300+ strategies. Find the ones you want at: [paperjs.org](http://paperjs.org)
+Obviously a facebook or twitter strategy would require a bit more.  The strategy will tell you what it needs.  Once you setup your strategy you provide it to Papers the same way as any other strategy
+
+Passport has 300+ strategies.  I have ported a few, it's quite easy.  Please find the ones you want at: [paperjs.org](http://paperjs.org)
+and port them or ask me and I'll do it.
 
 #### Sessions
 
-Paper will maintain persistent login sessions.  In order for persistent
+Papers will maintain persistent login sessions.  In order for persistent
 sessions to work, the authenticated user must be serialized to the session, and
 deserialized when subsequent requests are made.
 
-Paper does not impose any restrictions on how your user records are stored.
-Instead, you provide functions to Paper which implements the necessary
+Papers does not impose any restrictions on how your user records are stored.
+Instead, you provide functions to Papers which implement the necessary
 serialization and deserialization logic.  In a typical application, this will be
 as simple as serializing the user ID, and finding the user by ID when
 deserializing.
 
 ```javascript
-paper.serializeUser(function(user) {
+const serializeUser = function(user) {
   return user.id;
 });
 
-paper.deserializeUser(function(id) {
+const deserializeUser = function(id) {
   return User.findById(id);
 });
 ```
+
+If your user object is small and serializable you could just keep it in session
+```javascript
+const serializeUser = function(user) {
+  return user;
+});
+
+const deserializeUser = function(user) {
+  return user;
+});
+```
+
 #### Middleware
 
-To use Paper in an [Express](http://expressjs.com/) or
+To use Papers in an [Express](http://expressjs.com/) or
 [Connect](http://senchalabs.github.com/connect/)-based application, configure it
-with the required `paper.initialize()` middleware.  If your application uses
-persistent login sessions (recommended, but not required), `paper.session()`
-middleware must also be used.
+with at least the required proerties and functions.
 
 ```javascript
 var app = express();
@@ -75,86 +127,186 @@ app.use(require('serve-static')(__dirname + '/../../public'));
 app.use(require('cookie-parser')());
 app.use(require('body-parser').urlencoded({ extended: true }));
 app.use(require('express-session')({ secret: 'keyboard cat', resave: true, saveUninitialized: true }));
-app.use(paper.initialize());
-app.use(paper.session());
+
+const papersConfig = {
+  strategies: [ myStrategy ],
+  useSession: true,
+  serializers: [ serializeUser ],
+  deserializers: [ deserializeUser ]
+}
+
+app.use(papers().registerMiddleware(config));
 ```
 
 #### Authenticate Requests
 
-Paper provides an `authenticate()` function, which is used as route
-middleware to authenticate requests.
+By calling registerMiddleware you have told express to apply your strategy(ies) to every request.
+If you specify useSession to be true,  it will always check session first before trying to authenticate.
+If you would like to only authenticate a certain route then instead of
 
 ```javascript
-app.post('/login', 
-  paper.authenticate('local', { failureRedirect: '/login' }),
+app.use(papers().registerMiddleware(config));
+```
+you would use
+
+```javascript
+app.post('/login',
+  papers().registerMiddleware(config),
   function(req, res) {
     res.redirect('/');
   });
 ```
 
-## Strategies
-
-Paper has a comprehensive set of **over 300** authentication strategies
-covering social networking, enterprise integration, API services, and more.
-
-## Search all strategies
+### Search Passport strategies and convert to use promises and/or async/await
 
 There is a **Strategy Search** at [paperjs.org](http://paperjs.org)
+Please feel free to port these to papers or ask me to do it.
 
-The following table lists commonly used strategies:
+## API
 
-|Strategy                                                       | Protocol                 |Developer                                       |
-|---------------------------------------------------------------|--------------------------|------------------------------------------------|
-|[Local](https://github.com/jaredhanson/paper-local)         | HTML form                |[Jared Hanson](https://github.com/jaredhanson)  |
-|[OpenID](https://github.com/jaredhanson/paper-openid)       | OpenID                   |[Jared Hanson](https://github.com/jaredhanson)  |
-|[BrowserID](https://github.com/jaredhanson/paper-browserid) | BrowserID                |[Jared Hanson](https://github.com/jaredhanson)  |
-|[Facebook](https://github.com/jaredhanson/paper-facebook)   | OAuth 2.0                |[Jared Hanson](https://github.com/jaredhanson)  |
-|[Google](https://github.com/jaredhanson/paper-google)       | OpenID                   |[Jared Hanson](https://github.com/jaredhanson)  |
-|[Google](https://github.com/jaredhanson/paper-google-oauth) | OAuth / OAuth 2.0        |[Jared Hanson](https://github.com/jaredhanson)  |
-|[Twitter](https://github.com/jaredhanson/paper-twitter)     | OAuth                    |[Jared Hanson](https://github.com/jaredhanson)  |
+### papers.registerMiddleware(config={})
 
-## Examples
+Produces middleware ready to provide to either app `app.use(...)`
+or a route `app.post('/login', ..., (req,res)=> {}) `. 
+Valid `config` keys include
 
-- For a complete, working example, refer to the [example](https://github.com/paper/express-4.x-local-example)
-that uses [paper-local](https://github.com/jaredhanson/paper-local).
-- **Local Strategy**: Refer to the following tutorials for setting up user authentication via LocalStrategy (`paper-local`):
-    - Mongo
-      - Express v3x - [Tutorial](http://mherman.org/blog/2016/09/25/node-paper-and-postgres/#.V-govpMrJE5) / [working example](https://github.com/mjhea0/paper-local-knex)
-      - Express v4x - [Tutorial](http://mherman.org/blog/2015/01/31/local-authentication-with-paper-and-express-4/) / [working example](https://github.com/mjhea0/paper-local-express4)
-    - Postgres
-      - [Tutorial](http://mherman.org/blog/2015/01/31/local-authentication-with-paper-and-express-4/) / [working example](https://github.com/mjhea0/paper-local-express4)
-- **Social Authentication**: Refer to the following tutorials for setting up various social authentication strategies:
-    - Express v3x - [Tutorial](http://mherman.org/blog/2013/11/10/social-authentication-with-paper-dot-js/) / [working example](https://github.com/mjhea0/paper-examples)
-    - Express v4x - [Tutorial](http://mherman.org/blog/2015/09/26/social-authentication-in-node-dot-js-with-paper) / [working example](https://github.com/mjhea0/paper-social-auth)
+- `strategies` (required) - [array] an array of one or more configured papers-strategies.
+- `userProperty` (optional) - [string] default is 'user', you can provide your own key if you like.
+- `failWithError` (optional) - [bool] default is 'false'.  If true if all strategies fail then it throws error rather than calling next with the errors.
+- `failureRedirect` (optional) - [string] default is 'undefined'. If provided a url and all strategies fail, then you are redirected to said url.
+- `successRedirect` (optional) - [string] default is 'undefined'. If provided a url and strategy succeeds, then you are redirected to said url.
+- `useSession` (optional) - [bool] default is 'false'. specify whether you want to use session or not
+	- If you set useSession to true, 
+		- You must specify at least one serialize function and one deserialize function
+		- You must also have enabled session in your express or koa app.
+			- app.use(session());
+- `serializers` (optional) - [array[functions]] default is '[]' . If using session you must provide at least one function that takes a `user` and returns a serialized value for putting in session.
+- `deserializers` (optional) - [array[functions]] default is '[]' . if using session you must provide at least one function that takes a serialized `user` and returns a deserialized value for placing in request.
+- `customHandler` (optional) - [function] default is 'undefined'. If provided, the custom handler is used ***instead of*** internal failure, success and error paths.
+	- signature that is passed is all three cases is customHandler(request, respose, next, result)
+		- request - connect request object
+		- response - connect response object
+		- next - middle ware next function, call to pass on to next middleware
+		- result - the result of your strategy, either a failure message, a user in case of success or an error
+			- `failure` -> `{type:'failure', details:{errorMessage: 'string', statusCode: someStatusCode, exception: exception if provided}}`
+			- `error` -> `{type:'error', details:{errorMessage: 'string', statusCode: someStatusCode, exception: exception if provided}}`
+			- `success` -> `{type:'success', details:{user:user}}`
 
-## Related Modules
 
-- [Locomotive](https://github.com/jaredhanson/locomotive) — Powerful MVC web framework
-- [OAuthorize](https://github.com/jaredhanson/oauthorize) — OAuth service provider toolkit
-- [OAuth2orize](https://github.com/jaredhanson/oauth2orize) — OAuth 2.0 authorization server toolkit
-- [connect-ensure-login](https://github.com/jaredhanson/connect-ensure-login)  — middleware to ensure login sessions
+## Different ways of using Papers
 
-The [modules](https://github.com/jaredhanson/paper/wiki/Modules) page on the
-[wiki](https://github.com/jaredhanson/paper/wiki) lists other useful modules
-that build upon or integrate with Paper.
+- Here is the most common and most basic set up.
+
+```javascript
+
+  const serializeUser = user => user.Id;
+
+  const deserializeUser = id => {
+    User.findById(id, function (err, user) {
+      return user;
+    });
+  };
+
+  // Here you must validate the creds based on your applications logic.
+  // In this case we are using mongoose.
+  var authLocalUser = (username, password) => {
+    User.findOne({ username: username }, function (err, user) {
+      if (err) { return {type: 'error', details: {error: err}}; }
+      if (!user) { return {type: 'fail', details: {error: 'message'}}; }
+      if (!user.verifyPassword(password)) { return {type: 'fail', details: {error: 'invalid credentials'}}; }
+      return {type: 'success', details: {user: user}};
+    });
+  }
+
+  var local = paperslocal(authLocalUser);
+  var config = {
+      strategies: [local],
+      useSession: true,
+      serializers: [serializeUser],
+      deserializers: [deserializeUser]
+  };
+
+  app.use(papers().registerMiddleware(config));
+
+```
+
+## Data Flow
+ **Typical path**
+  - your request comes in
+    - we decorate request with "logOut" function and "isAuthenticated" function
+      - logOut is a convience method that cleans up for you, with out your needing
+      to go into Papers
+      - isAuthenticated is another convience method to give you a quick status check
+      - all other functionality is taken care of inside of papers
+    - We check if you are using session and if so whether you are already logged in
+    - If already logged in we put the user on the request and call the next middleware
+    - If not useing session or not logged in we then iterate over your specified strategies
+      - If your first strategy fails, we save the message and try the next
+      - If all your strategies fail, the default behavior is to set a "www-authenicate" header with the accumulated errors
+        and end response with a 401
+      - If your strategy returns or throws an error we call the next middleware passing in the error.  This will be
+        handled either by your error handling middleware or by your controller action
+      - If your strategy returns a success then the user will be placed on the request and the next middleware will be called.
+    - In some of those cases your request will land in your controller and you will be able to handle it however you like.
+    - There are a couple of alternative paths you might want to use
+
+  **Custom handling**
+    alternatively you can provide a custom handler that deals with each state as it comes back
+
+  - your request comes in
+    - we decorate request with "logOut" function and "isAuthenticated" function
+    - We check if you are using session and if so whether you are already logged in
+    - If already logged in we put the user on the request and call the next middleware
+    - If not useing session or not logged in we then iterate over your specified strategies
+      - If your first strategy fails, we save the message and try the next
+      - If all your strategies fail we call your custom handler with the following
+        - Request, response, next, result
+        - The result is the standard result format `{type: 'fail', details: { error: [collection of errors] }`
+      - If your strategy returns or throws an error we call your custom handler with the following
+        - request, response, next, result
+        - The result is the standard result format `{type: 'error', details: { error: exception }`
+      - If your strategy returns a success then the user will be placed on the request and we call your custom handler with the following
+        - request, response, next, result
+        - The result is the standard result format `{type: 'success', details: { user: user }`
+    - It is the responsibility of your custom handler to either end the request or call the next middleware.
+    - Essentially the custom handler acts as your controller action which can optionally proceed through the middleware or return short.
+
+    ### Custom failure path
+    - You can specify the following options in your papers config
+      - failWithError : bool
+      - failureRedirect: url (string)
+    - Your request comes in and strategies all fails
+      - failWithError is true
+        - changes result from 'fail' to 'error' and is handled as such
+      - failureRedirect is set
+        - instead of directly returning with 401, it redirects to the provided url with 401
+
+    ### Custom success
+    - You can specify the following option in your papers config
+      - successRedirect: url (string)
+    - Your request comes in succeeds
+      - successRedirect is set
+        - instead of proceeding to next middleware and ultimately your controller action
+        it places user on request and redirects to provided url
+
+    ### Missing features
+    - If there are any features that you are used to from passport but are missing here
+    please let me know and I will implemnt them
+
 
 ## Tests
 
 ```
 $ npm install
-$ make test
+$ npm test
+$ npm run intTests
+
 ```
 
 ## Credits
 
-  - [Jared Hanson](http://github.com/jaredhanson)
-
-## Supporters
-
-This project is supported by ![](http://paperjs.org/images/supported_logo.svg) [Auth0](https://auth0.com) 
+  - Thanks to [Jared Hanson](http://github.com/jaredhanson) for the inspiration
 
 ## License
 
 [The MIT License](http://opensource.org/licenses/MIT)
-
-Copyright (c) 2011-2015 Jared Hanson <[http://jaredhanson.net/](http://jaredhanson.net/)>
