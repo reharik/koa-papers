@@ -5,8 +5,7 @@
   "main": "./src/papers.js",
   "scripts": {
     "test": "mocha --watch tests/*",
-    "test2": "mocha integrationTests/*.tests.js",
-    "intTest": "nodemon integrationTests/express.tests.js"
+    "intTest": "mocha integrationTests/*.tests.js"
   },
   "author": "",
   "license": "ISC",
