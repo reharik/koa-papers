@@ -1,6 +1,6 @@
 var papersLocal = require('papers-local');
-var testStrategy = require('./../tests/helpers/testStrategy');
-var papers = require('./../src/papers');
+var testStrategy = require('./../helpers/testStrategy');
+var papers = require('./../../src/papers');
 
 var basicSuccess = (app) => {
 

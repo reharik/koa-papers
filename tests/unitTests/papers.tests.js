@@ -1,4 +1,4 @@
-var SUT = require('./../src/papers');
+var SUT = require('./../../src/papers');
 var chai = require('chai');
 chai.should();
 

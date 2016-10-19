@@ -1,24 +1,25 @@
-var papers = require('./../src/papers');
-var context = require('./helpers/context');
-var strategy = require('./helpers/testStrategy');
+var papers = require('./../../src/papers');
+var context = require('./../helpers/context');
+var strategy = require('./../helpers/testStrategy');
 var co = require('co');
 
 var chai = require('chai');
 var expect = chai.expect;
 chai.should();
 
-describe('PASS_RESPONSE', () => {
+describe('NO_RESPONSE', () => {
   describe('when_no_strategy_is_successful_and_no_specific_errors', () => {
     let SUT = undefined;
     let ctx;
     let next = (arg)=> {nextArg=arg};
     beforeEach((done) => {
       ctx = context();
-      var myStrategy = strategy({type:'pass'});
+      var myStrategy = strategy();
       var config = {
         strategies: [myStrategy]
       };
       SUT = papers().registerMiddleware(config);
+
       co(function *(){
         yield SUT.call(ctx, [next]);
         done();
@@ -32,6 +33,7 @@ describe('PASS_RESPONSE', () => {
     it('should_set_res_header_WWWW-Authenticate_to_error_message', () => {
       ctx.get('WWW-Authenticate')[0].should.equal('No successful login strategy found');
     });
+
   });
 
   describe('when_no_strategy_is_successful_and_no_specific_errors_and_fail_with_error', () => {
@@ -41,7 +43,7 @@ describe('PASS_RESPONSE', () => {
     let next = (arg)=> {nextArg=arg};
     beforeEach((done) => {
       ctx = context();
-      var myStrategy = strategy({type:'pass'});
+      var myStrategy = strategy();
       var config = {
         strategies: [myStrategy],
         failWithError: true
@@ -74,7 +76,7 @@ describe('PASS_RESPONSE', () => {
     beforeEach((done) => {
       ctx = context();
       ctx.redirect = (arg)=> {nextArg=arg};
-      var myStrategy = strategy({type:'pass'});
+      var myStrategy = strategy();
       var config = {
         strategies: [myStrategy],
         failureRedirect: 'some.url'
@@ -98,5 +100,6 @@ describe('PASS_RESPONSE', () => {
     it('should_set_res_header_WWWW-Authenticate_to_error_message', () => {
       ctx.get('WWW-Authenticate')[0].should.equal('No successful login strategy found');
     });
+
   });
 });

@@ -1,7 +1,7 @@
 
-var papers = require('./../src/papers');
-var context = require('./helpers/context');
-var strategy = require('./helpers/testStrategy');
+var papers = require('./../../src/papers');
+var context = require('./../helpers/context');
+var strategy = require('./../helpers/testStrategy');
 var co = require('co');
 
 var chai = require('chai');
