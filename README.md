@@ -1,5 +1,7 @@
+[![Build Status](https://travis-ci.org/reharik/papers.svg?branch=functional)](https://travis-ci.org/reharik/papers)
+[![Code Climate](https://codeclimate.com/github/reharik/papers/badges/gpa.svg)](https://codeclimate.com/github/reharik/papers)
+[![Test Coverage](https://codeclimate.com/github/reharik/papers/badges/coverage.svg)](https://codeclimate.com/github/reharik/papers/coverage)
 # Papers
-
 
 Papers is promise based authentication
 middleware for [Node.js](http://nodejs.org/).
