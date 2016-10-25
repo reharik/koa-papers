@@ -7,6 +7,15 @@
     "intTest": "mocha tests/integrationTests/*.tests.js",
     "test": "istanbul cover node_modules/mocha/bin/_mocha -- tests/**/*.tests.js"
   },
+  "keywords": [
+    "papers",
+    "passport",
+    "strategy",
+    "koa",
+    "promise",
+    "authentication",
+    "auth"
+  ],
   "author": "",
   "license": "ISC",
   "devDependencies": {
