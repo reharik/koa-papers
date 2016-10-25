@@ -1,6 +1,7 @@
-[![Build Status](https://travis-ci.org/reharik/koa-papers.svg?branch=functional)](https://travis-ci.org/reharik/koa-papers)
+[![Build Status](https://travis-ci.org/reharik/koa-papers.svg?branch=master)](https://travis-ci.org/reharik/koa-papers)
 [![Code Climate](https://codeclimate.com/github/reharik/koa-papers/badges/gpa.svg)](https://codeclimate.com/github/reharik/koa-papers)
 [![Test Coverage](https://codeclimate.com/github/reharik/koa-papers/badges/coverage.svg)](https://codeclimate.com/github/reharik/koa-papers/coverage)
+[![Issue Count](https://codeclimate.com/github/reharik/koa-papers/badges/issue_count.svg)](https://codeclimate.com/github/reharik/koa-papers)
 # Papers
 
 Papers is promise based authentication
