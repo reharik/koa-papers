@@ -4,9 +4,8 @@
   "description": "",
   "main": "./src/papers.js",
   "scripts": {
-    "test": "mocha tests/unitTests/*",
     "intTest": "mocha tests/integrationTests/*.tests.js",
-    "testcov": "istanbul cover node_modules/mocha/bin/_mocha -- tests/**/*.tests.js"
+    "test": "istanbul cover node_modules/mocha/bin/_mocha -- tests/**/*.tests.js"
   },
   "author": "",
   "license": "ISC",
