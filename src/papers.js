@@ -127,7 +127,7 @@ module.exports = function() {
           failAndContinue: config.failAndContinue,
           failWithError: config.failWithError,
           assignProperty: config.assignProperty,
-          whiteList: config.whiteList
+          whiteList: config.whiteList || []
         }
       };
       return createAuthenticationMiddleware(papers);
