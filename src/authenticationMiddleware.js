@@ -74,7 +74,12 @@ module.exports = (papers) => {
     /********* add convenience methods to req *************/
     ctx.logOut = papers.functions.logOut(ctx, papers.options.userProperty, papers.options.key);
     ctx.isAuthenticated = papers.functions.isAuthenticated(ctx);
-
+    
+    /****** whiteList ********/
+    if(papers.options.whiteList.some(x=> x.method === ctx.request.method && x.url === ctx.request.url)){
+      return yield next;
+    }
+    
     const hasSession = yield checkSession(ctx, papers);
     // this is strange logic but necessary to handle hasSession throwing
     let result = hasSession && !hasSession.isLoggedIn

@@ -126,7 +126,8 @@ module.exports = function() {
           successRedirect: config.successRedirect,
           failAndContinue: config.failAndContinue,
           failWithError: config.failWithError,
-          assignProperty: config.assignProperty
+          assignProperty: config.assignProperty,
+          whiteList: config.whiteList
         }
       };
       return createAuthenticationMiddleware(papers);
