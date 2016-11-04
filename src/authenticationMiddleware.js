@@ -76,7 +76,7 @@ module.exports = (papers) => {
     ctx.isAuthenticated = papers.functions.isAuthenticated(ctx);
     
     /****** whiteList ********/
-    if(papers.options.whiteList.some(x=> x.url === ctx.request.url && (!!x.method ? x.method === ctx.request.method : true)){
+    if(papers.options.whiteList.some(x=> x.url === ctx.request.url && (!!x.method ? x.method === ctx.request.method : true))){
       return yield next;
     }
     
