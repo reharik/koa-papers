@@ -10,7 +10,6 @@ module.exports = function *(papers, ctx) {
       return {isLoggedIn: false};
     }
     ctx.state[papers.options.userProperty] = user;
-    ctx.status = 200;
     return {isLoggedIn: true};
   }
   return {isLoggedIn: false};

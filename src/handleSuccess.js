@@ -1,7 +1,6 @@
 const co = require('co');
 
 module.exports = function *(stratResult, ctx, papers) {
-  ctx.status = 200;
   if (papers.functions.customHandler) {
     return {type: 'customHandler', result: 'success', value: stratResult};
   }
